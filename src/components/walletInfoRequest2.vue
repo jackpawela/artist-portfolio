@@ -14,12 +14,6 @@
       />
     </div>
 
-    <button
-      v-if='viewingSelf'
-      @click='editProfile'
-      >Edit Profile
-    </button>
-
 
     <div class='flex'>
 
@@ -68,13 +62,8 @@ import CreatorInfo from './CreatorInfo.vue';
 import { createAlchemyWeb3 } from '@alch/alchemy-web3';
 // import { Network, initializeAlchemy } from '@alch/alchemy-sdk';
 
-// Axios API dependency
-import axios from 'axios';
-// var version = web3.version.api;
-
 // addresses & keys
 const apiKey = 'KdP80Ts57MxaQKbGfAcVeoBt76sJck-N';
-const baseURL = `https://eth-mainnet.alchemyapi.io/nft/v2/${apiKey}/getNFTMetadata`;
 
 // ethers dependency
 import { ethers } from 'ethers';
@@ -92,8 +81,6 @@ export default {
     return {
       tokens: [], // ERC721 & ERC1155 tokens minted by wallet
       res: [], // raw alchemy transfer
-      viewingSelf: false,
-      userAddress: '',
     };
   },
 
@@ -111,15 +98,6 @@ export default {
 
    // initializes API call
     async getData() {
-
-      const user = this.$moralis.User.current();
-
-      this.userAddress = await user.get('ethAddress');
-
-      if(this.userAddress == this.address) {
-        this.viewingSelf = true;
-      }
-      
       try {
 
         // Alchemy parameters
@@ -133,16 +111,6 @@ export default {
           category: ['erc721', 'erc1155']
         }
 
-/*
-        // Alchemy NFT metadata request parameters
-        const settings = {
-          apiKey: apiKey,
-          network: Network.ETH_MAINNET,
-          maxRetries: 10,
-        };
-
-        const alchemy = initializeAlchemy(settings);
- */
 
         const web3 = createAlchemyWeb3(
           `https://eth-mainnet.alchemyapi.io/v2/${apiKey}`
@@ -152,88 +120,28 @@ export default {
         
         for (const events of this.res.transfers) {
 
+          const options = {
+            address: events.rawContract.address,
+          };
 
-          if (events.erc1155Metadata == null) {
+          console.log(await this.$moralis.Web3API.token.getAllTokenIds(options));
 
-            // axios config
-            let config = {
-              method: 'get',
-              url: `${baseURL}?contractAddress=${events.rawContract.address}&tokenId=${events.tokenId}&tokentype='erc721'`,
-              headers: { }
-            };
+          let moralisNftTransfers = await this.$moralis.Web3API.token.getAllTokenIds(options);
 
-            // temporary variables
-            let contractAddress = events.rawContract.address;
-            let tokenId = parseInt(events.tokenId);
-            let tokenType = 'ERC721';
-            let nftMetadata;
-              
-            // axios nft metadata request
-            await axios(config)
-              .then(response => ( 
-                nftMetadata = response.data
-              ))
-              .catch(error => console.log(error));
-
-            // push data & metadata to global tokens array
+          for (const token of moralisNftTransfers.result) {
             this.tokens.push({
-              contractAddress: contractAddress,
-              tokenId: tokenId,
-              tokenType: tokenType,
-              nftMetadata: nftMetadata
+              contractAddress: token.token_address,
+              tokenId: token.token_id,
+              tokenType: token.contract_type,
+              nftMetadata: token.metadata
             });
-
-          } else {
-
-              
-
-            for (const erc1155 of events.erc1155Metadata) {
-
-              // temporary variables
-              let contractAddress = events.rawContract.address;
-              let tokenId = parseInt(erc1155.tokenId.slice(2));
-              let tokenType = 'ERC1155';
-              let nftMetadata;
-
-              // axios config
-              let config = {
-                method: 'get',
-                url: `${baseURL}?contractAddress=${events.rawContract.address}&tokenId=${erc1155.tokenId}&tokentype='erc1155'`,
-                headers: { }
-              };
-
-              // axios nft metadata request
-              await axios(config)
-                .then(response => ( 
-                  nftMetadata = response.data
-                ))
-                .catch(error => console.log(error));
-
-              // push data & metadata to global tokens array
-              this.tokens.push({
-                contractAddress: contractAddress,
-                tokenId: tokenId,
-                tokenType: tokenType,
-                nftMetadata: nftMetadata
-              });
-
-            }
-
-/*            for (const erc1155 of events.erc1155Metadata) {
-              this.tokens += {
-                contractAddress: events.rawContract.address,
-                tokenId: erc1155.tokenId,
-                tokenType: 'ERC1155',
-                nftMetadata: await getNftMetadata(
-                  alchemy,
-                  events.rawContract.address,
-                  erc1155.tokenId,
-                  'ERC1155'
-                ),
-              };
-            }
- */
           }
+
+        }
+
+        
+        } catch(error) {
+            console.log(error);
         }
 
         for (let token of this.tokens) {
@@ -255,14 +163,7 @@ export default {
             console.log('media: ', token.nftMetadata.metadata.image);
         }
 
-      } catch (error) {
-        console.log(error);
-      }
     },
-
-    editProfile() {
-      this.$emit('editProfile');
-    }
 
   },
 

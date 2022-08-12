@@ -57,7 +57,7 @@ export default {
   },
 
   methods: {
-    async getTwitterHandle() {
+    async getCreatorInfo() {
       try {
         const provider = new ethers.providers.CloudflareProvider();
         //change to this.name
@@ -85,7 +85,7 @@ export default {
   },
   
   created() {
-    this.getTwitterHandle();
+    this.getCreatorInfo();
   },
 }
 

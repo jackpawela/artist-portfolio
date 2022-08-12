@@ -52,15 +52,20 @@
 
       <!-- display minted nft metadata, request ens name -->
       <walletInfoRequest
-        v-if="address && walletRequestKey"
+        v-if="address && walletRequestKey && !editingProfile"
         :address="address"
         :ensName="ensName"
         :key='walletRequestKey'
+        @editProfile='editingProfile=true'
       />
 
     </div>
 
-    <h1 v-if="ensRequestKey==0">Find your favorite digital art creator</h1>
+    <EditProfile
+      v-if='editingProfile'
+    />
+
+    <h1 v-if="ensRequestKey==0 && !editingProfile">Find your favorite digital art creator</h1>
 
   </div>
 </template>
@@ -68,6 +73,7 @@
 <script>
 // components
 import walletInfoRequest from './components/walletInfoRequest.vue';
+import EditProfile from './components/EditProfile.vue';
 import EnsRequest from './components/EnsRequest.vue';
 import WalletSelect from './components/WalletSelect.vue';
 
@@ -80,6 +86,7 @@ export default {
     walletInfoRequest,
     EnsRequest,
     WalletSelect,
+    EditProfile,
   },
 
   data() {
@@ -90,6 +97,7 @@ export default {
       ensRequestKey: 0, // increment to force re-render of EnsRequest
       walletRequestKey: 0, // increment to force re-render of walletInfoRequest
       invalidAddress: '', // error message if address is invalid
+      editingProfile: false, // toggles edit profile element
     };
   },
 
@@ -118,6 +126,10 @@ export default {
       this.ensRequestKey++;
       this.walletRequestKey++;
     },
+
+    editProfile() {
+      this.editingProfile = true;
+    }
   },
 
   created() {

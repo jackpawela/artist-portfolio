@@ -76,21 +76,10 @@
 export default {
   name: 'WalletSelect',
 
-  components: {
-  },
-
   data() {
     return {
       popupOn: false,
       wallet: '',
-      walletConnectKey: 1,
-
-      walletConnectData: {
-        accounts: [],
-        chainId: '',
-      },
-
-      metamaskData: { },
     };
   },
 
